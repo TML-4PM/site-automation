@@ -1,1 +1,59 @@
-404: Not Found
+name: Deploy Tech 4 Humanity Sites
+
+on:
+  workflow_dispatch:
+    inputs:
+      sites:
+        description: 'Sites to deploy (comma-separated or "all")'
+        required: true
+        default: 'all'
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        site: [gcbat-org, far-cage, ai-era-thinking, enteraustralia-tech, workfamilyai-org, aquame-platform]
+      fail-fast: false
+      max-parallel: 6
+    
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+      
+      - name: Find and deploy repository
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        run: |
+          SITE="${{ matrix.site }}"
+          echo "🔍 Searching for: $SITE"
+          
+          # Try to find repo
+          for variant in "$SITE" "${SITE}-site" "${SITE}-web"; do
+            if gh repo view "TML-4PM/$variant" &>/dev/null; then
+              REPO="TML-4PM/$variant"
+              echo "✅ Found: $REPO"
+              
+              # Clone and deploy
+              gh repo clone "$REPO" site-repo
+              cd site-repo
+              
+              echo "🚀 Deploying..."
+              vercel pull --yes --environment=production --token=$VERCEL_TOKEN || true
+              vercel build --prod --token=$VERCEL_TOKEN || true
+              vercel deploy --prod --token=$VERCEL_TOKEN
+              
+              echo "✅ Deployed $SITE"
+              exit 0
+            fi
+          done
+          
+          echo "⚠️  No repo found for $SITE"
