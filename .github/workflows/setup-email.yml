@@ -1,1 +1,14 @@
-404: Not Found
+name: Setup Email
+on:
+  workflow_dispatch:
+jobs:
+  setup-email:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        domain: [gcbat.org, far-cage.org, enteraustralia.tech, workfamilyai.org, aquame.com.au]
+    steps:
+      - run: |
+          curl -X POST "https://api.migadu.com/v1/domains" -u "${{ secrets.MIGADU_API_USER }}:${{ secrets.MIGADU_API_KEY }}" -H "Content-Type: application/json" -d "{\"name\": \"${{ matrix.domain }}\"}"
+          for m in info hello support; do curl -X POST "https://api.migadu.com/v1/domains/${{ matrix.domain }}/mailboxes" -u "${{ secrets.MIGADU_API_USER }}:${{ secrets.MIGADU_API_KEY }}" -H "Content-Type: application/json" -d "{\"local_part\": \"$m\", \"name\": \"Tech 4 Humanity\", \"password_method\": \"none\", \"recipients\": [\"troy@tech4humanity.com.au\"]}"; done
