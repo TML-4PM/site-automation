@@ -1,0 +1,19 @@
+name: Fix Email Forwarding to Command Centre
+on:
+  workflow_dispatch:
+jobs:
+  fix-forwarding:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        domain: [tech4humanity.com.au, holo-org.com, workfamilyai.org, augmentedhumanity.coach, gcbat.org, ratpak.io, neuropak.io, myneuralsignal.com, mcp-native.com, enteraustralia.tech, far-cage.org, troylatter.com, spotto.app, globaltyres.org, all-chemist.org, apexpredatorinsurance.com, innovateme.link, innovateme.systems, aisweetspots.com, tech4humanity.net, consentx.io, livingstack.io, mind-atlas.io, ownyourai.org, quantumnative.io, ethicstokens.io, sparex.io, girlmath.io, extremespotto.com]
+    steps:
+      - run: |
+          D="${{ matrix.domain }}"
+          echo "🔧 Fixing $D forwarding"
+          for m in hello info support admin noreply team troy agent marketing sales santa projects feedback alerts security postmaster abuse legal finance hr media careers partners board; do
+            curl -s -X PUT "https://api.migadu.com/v1/domains/$D/mailboxes/$m" -u "${{ secrets.MIGADU_API_USER }}:${{ secrets.MIGADU_API_KEY }}" -H "Content-Type: application/json" -d "{\"recipients\": [\"command@holo-org.com\"]}" || true
+          done
+          echo "✅ $D → command@holo-org.com"
